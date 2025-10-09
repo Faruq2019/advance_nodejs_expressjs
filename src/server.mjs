@@ -59,6 +59,28 @@ app.get("/api/products", (req, res) => {
   res.send([{ id: 1, name: "Laptop", price: 999.99 }]);
 });
 
+app.put("/api/users/:id", (req, res) => {
+  const {
+    body,
+    params: { id },
+  } = req;
+  const parseId = parseInt(id);
+  if (isNaN(parseId))
+    return res.status(400).send({ msg: "Bad Request. Invalid user id" });
+
+  const userIndex = mockUsers.findIndex((user) => user.id === parseId);
+  if (userIndex === -1) return res.sendStatus(404);
+  const updatedUser = { id: parseId, ...body };
+  mockUsers[userIndex] = updatedUser;
+  return res.status(200).send(updatedUser);
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+//PUT: allows you to update a resource completely i.e you need to provide all the fields of a resource even if you want to update just one field.
+//PATCH: allows you to update a resource partially i.e you can update one or more fields of a resource without affecting the other fields.
+//DELETE: allows you to delete a resource.
+//GET: allows you to fetch a resource or a list of resources.
+//POST: allows you to create a new resource.
