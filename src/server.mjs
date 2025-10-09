@@ -90,6 +90,20 @@ app.patch("/api/users/:id", (req, res) => {
   return res.status(200).send(updatedUser);
 });
 
+app.delete("/api/users/:id", (req, res) => {
+  const {
+    params: { id },
+  } = req;
+  const parseId = parseInt(id);
+  if (isNaN(parseId))
+    return res.status(400).send({ msg: "Bad Request. Invalid user id" });
+
+  const userIndex = mockUsers.findIndex((user) => user.id === parseId);
+  if (userIndex === -1) return res.sendStatus(404);
+  mockUsers.splice(userIndex, 1);
+  return res.sendStatus(204);
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
