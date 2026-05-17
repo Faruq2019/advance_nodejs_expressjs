@@ -3,7 +3,18 @@ import { Router } from "express";
 const router = Router();
 
 router.get("/api/products", (req, res) => {
-  res.send([{ id: 1, name: "Laptop", price: 999.99 }]);
+  console.log("Header Cookies", req.headers.cookie);
+  console.log("Parsed Cookies", req.cookies);
+  console.log("Signed Cookies", req.signedCookies);
+  if (
+    req.signedCookies &&
+    req.signedCookies.myCookie &&
+    req.signedCookies.myCookie === "cookieValue"
+  ) {
+    res.send([{ id: 1, name: "Laptop", price: 999.99 }]);
+  } else {
+    res.status(401).send({ error: "Unauthorized" });
+  }
 });
 
 export default router;
