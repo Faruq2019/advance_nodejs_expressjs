@@ -3,6 +3,8 @@ import { loggingMiddleware } from "../utils/middleware.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import { mockUsers } from "../utils/constants.mjs";
+import passport from "passport";
+import "./../strategies/local-strategy.mjs"; //import the local strategy for authentication
 
 //Routes
 import routes from "./routes/index.mjs";
@@ -24,6 +26,8 @@ app.use(
     },
   }),
 ); //third-party middleware to manage user sessions and should be passed before the routes so that the session data can be accessed in the route handlers.
+app.use(passport.initialize());
+app.use(passport.session()); //Passport middleware for authentication, should be passed after the session middleware so that it can access the session data to manage user authentication state.
 app.use(routes); //use the routes defined in the routes/index.mjs file, which will handle all the API endpoints for our application. This should be passed after the middleware so that the middleware can be executed before the route handlers.
 
 const PORT = process.env.PORT || 3000;
@@ -42,33 +46,40 @@ app.get("/", (req, res) => {
   res.status(201).send({ msg: "Hello, World!" });
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
   const {
     body: { username, password },
   } = req;
 
-  const findUser = mockUsers.find((user) => user.username === username);
-  if (!findUser) return res.status(401).send({ error: "Invalid credentials" });
+  console.log("Login attempt:", username, password);
 
-  if (findUser.password !== password) {
-    return res.status(401).send({ error: "Invalid credentials" });
+  // If authentication is successful, the user object will be available in req.user
+  if (req.user) {
+    req.session.user = req.user; // Store user information in the session
+    res.status(200).send({ message: "Login successful", user: req.user });
+  } else {
+    res.status(401).send({ message: "Login failed" });
   }
-
-  req.session.user = findUser; //store the user information in the session
-  res.status(200).send({ msg: "Login successful" });
 });
 
-app.get("/api/status", (req, res) => {
-  req.sessionStore.get(req.session.id, (err, session) => {
-    if (err) {
-      console.error("Error retrieving session data:", err);
-      throw err;
-    }
-    console.log("Session data from store:", session);
-  });
-  req.session.user
-    ? res.status(200).send({ message: "Logged in", user: req.session.user })
+app.get("/api/auth/status", (req, res) => {
+  console.log("Checking authentication status for session:", req.user);
+  console.log("Session Data:", req.session);
+  req.user
+    ? res.status(200).send({ message: "Logged in", user: req.user })
     : res.status(401).send({ message: "Not logged in" });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  console.log("Logging out user:", req.user);
+  if (!req) return res.status(400).send({ message: "No user to log out" });
+  req.logout((err) => {
+    if (err) {
+      console.error("Error during logout:", err);
+      return res.status(500).send({ message: "Logout failed" });
+    }
+    res.status(200).send({ message: "Logged out successfully" });
+  });
 });
 
 app.listen(PORT, () => {
