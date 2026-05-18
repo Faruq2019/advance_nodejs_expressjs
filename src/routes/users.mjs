@@ -24,6 +24,16 @@ router.get(
       "Filter must be a non-empty string between 3 and 10 characters long",
     ),
   (req, res) => {
+    console.log("Session Data:", req.session);
+    console.log("Session ID:", req.session.id);
+    req.sessionStore.get(req.session.id, (err, session) => {
+      if (err) {
+        console.error("Error retrieving session data:", err);
+        throw err;
+      }
+      console.log("Session data from store:", session);
+    });
+
     console.log("Query params:", req.query);
     const result = validationResult(req);
     console.log("Validation result:", result);
