@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { mockUsers } from "../utils/constants.mjs";
 import { User } from "../mongoose/schemas/user.mjs";
+import { comparePassword } from "../utils/helpers.mjs";
 
 passport.serializeUser((user, done) => {
   done(null, user.id); //serialize the user by storing the user id in the session
@@ -24,7 +25,8 @@ export default passport.use(
     try {
       const user = await User.findOne({ username });
       if (!user) throw new Error("Invalid credentials");
-      if (user.password !== password) throw new Error("Invalid credentials");
+      if (!comparePassword(password, user.password))
+        throw new Error("Invalid credentials");
       done(null, user);
     } catch (error) {
       done(error, null);
