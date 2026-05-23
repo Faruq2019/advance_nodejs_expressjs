@@ -9,6 +9,7 @@ import {
 import { mockUsers } from "../../utils/constants.mjs";
 import { createUserValidationSchema } from "../../validators/validationSchema.mjs";
 import { resolveIndexByUserId } from "../../utils/middleware.mjs";
+import { User } from "./../../mongoose/schemas/user.mjs";
 
 const router = Router();
 
@@ -57,18 +58,32 @@ router.get("/api/users/:id", resolveIndexByUserId, (req, res) => {
 router.post(
   "/api/users",
   checkSchema(createUserValidationSchema),
-  (req, res) => {
-    console.log("Payload:", req.body);
+  async (req, res) => {
     const result = validationResult(req);
-    console.log("Validation result:", result);
-    if (!result.isEmpty())
-      return res.status(400).send({ errors: result.array() });
 
-    const { username, displayName } = matchedData(req);
-    console.log("Validated data:", { username, displayName });
-    const newUser = { id: mockUsers.length + 1, ...{ username, displayName } };
-    mockUsers.push(newUser);
-    res.status(201).send(newUser);
+    //Which signify that their is an error
+    if (!result.isEmpty())
+      res.status(400).send({
+        error: true,
+        message: "validation Error",
+        details: result.array(),
+      });
+
+    const data = matchedData(request);
+
+    console.log("Data", data);
+
+    //Instance of the user model
+    const newUser = new User(data);
+    try {
+      const savedUser = await newUser.save();
+      return res
+        .status(201)
+        .send({ message: "User created successfully", data: savedUser });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).send({ message: "Bad request" });
+    }
   },
 );
 

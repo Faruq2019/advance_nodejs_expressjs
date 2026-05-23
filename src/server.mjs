@@ -5,11 +5,22 @@ import session from "express-session";
 import { mockUsers } from "../utils/constants.mjs";
 import passport from "passport";
 import "./../strategies/local-strategy.mjs"; //import the local strategy for authentication
+import mongoose from "mongoose";
 
 //Routes
 import routes from "./routes/index.mjs";
 
 const app = express();
+
+//Database connection
+// mongoose
+//   .connect("mongodb://localhost:27017/express_tutorial")
+//   .then(() => {
+//     console.log("Connected to MongoDB");
+//   })
+//   .catch((err) => {
+//     console.log("Error connecting to MongoDB:", err);
+//   });
 
 //Application-level middleware
 app.use(express.json()); //built-in middleware to parse JSON payloads in the request body
